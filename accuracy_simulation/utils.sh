@@ -40,7 +40,7 @@ run_single_exp () {
   local promote_ratio_str=$(echo "$promote_ratio" | sed 's/\./_/g')
   local log_name="${GPUs//,/}_${model_short}_${TASK_NAME}_s${sink}_k${kbits}v${vbits}_pro${promote_ratio_str}.log"
 
-  nohup sh -c "
+  sh -c "
     CUDA_VISIBLE_DEVICES=$GPUs TOKENIZERS_PARALLELISM=false \
     HF_DATASETS_TRUST_REMOTE_CODE=1 \
       eval_kitty $MODEL \

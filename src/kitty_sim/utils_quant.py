@@ -24,6 +24,8 @@ def build_promote_mask(
                                         (0)  for Random Selection;
                                         (1)  Magnitude-based Channel Selection;
                                         (2)  Variance-based Channel Selection;
+                                        (3)  Contiguous region with highest mean magnitude;
+                                             region size = int(D * promote_ratio), must divide D;
     returns:
         promote_mask  : (B, nh, D) bool,      promote_mask[i][j] == True -> j-th channel of i-th head is selected for promotion
     """
@@ -54,6 +56,14 @@ def build_promote_mask(
         score = diff.pow(2).mean(dim=-1)  # (B, nh, D, T) → (B, nh, D)
         _, top_idx = score.topk(k_chan, dim=-1)
         promote_mask.scatter_(-1, top_idx, True)   # True → promote channel
+    elif channel_selection == 3:
+        if D % k_chan != 0:
+            raise ValueError("For channel_selection=3, int(D * promote_ratio) must divide D (e.g. 0.25 for D=128).")
+        score = key_states.abs().mean(dim=-1)  # (B, nh, D)
+        region_score = score.reshape(B, nh, D // k_chan, k_chan).mean(dim=-1)
+        start = region_score.argmax(dim=-1, keepdim=True) * k_chan
+        indices = start + torch.arange(k_chan, device=key_states.device)
+        promote_mask.scatter_(-1, indices, True)
     ########################################################################################################################
     else:
         raise ValueError(f"Invalid channel_selection strategy: {channel_selection}")

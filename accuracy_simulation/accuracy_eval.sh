@@ -13,6 +13,10 @@ if [ "$#" -lt 3 ] || [ "$#" -gt 5 ]; then
   echo '  ./accuracy_eval.sh "Qwen/Qwen3-8B" aime24 0         # 1 repeat, batch_size=1 (default)'
   exit 1
 fi
+export HF_HOME="/home/bigyang/llm-inference/bigbit/local"  # directory for the Hugging Face cache
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+
 MODEL=$1
 TASK_NAME=$2
 GPUs=$3
@@ -41,15 +45,15 @@ source ./utils.sh
 
 # Evaluating Kitty algorithm
 #               label           sink  channel_sel  kbits  vbits  promote_bit    promote_ratio
-run_single_exp  "Kitty-Pro"     32    1            2      2      4              0.2
+run_single_exp  "Kitty-Pro"     32    0            2      2      4              0.25
 
 # Evaluating K16V16 baseline
-run_hf_baseline
+# run_hf_baseline
 
-# More evaluations
-#               label      sink   channel_sel  kbits  vbits  promote_bit    promote_ratio
-run_single_exp  "KIVI-2"    0     0            2      2      4              0.0             # KIVI-2
-run_single_exp  "KIVI*-2"  32     0            2      2      4              0.0             # KIVI*-2
+# # More evaluations
+# #               label      sink   channel_sel  kbits  vbits  promote_bit    promote_ratio
+# run_single_exp  "KIVI-2"    0     0            2      2      4              0.0             # KIVI-2
+# run_single_exp  "KIVI*-2"  32     0            2      2      4              0.0             # KIVI*-2
 
 echo "Accuracy Evaluations for $TASK_NAME on $MODEL completed."
 #####################################################################################################################
